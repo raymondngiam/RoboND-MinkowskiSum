@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include "../lib/matplotlibcpp.h"
+#include "matplotlibcpp.h"
 #include <math.h>
 
 using namespace std;
@@ -169,26 +169,51 @@ void draw_shapes(vector<vector<double> > A, vector<vector<double> > B, vector<ve
     plt::clf();
 }
 
+vector<vector<double>> translate(vector<vector<double>> A, vector<double>& offset){
+    for (int i = 0; i < A.size(); i++) {
+        A[i][0] = A[i][0]+ offset[0];
+        A[i][1] = A[i][1]+ offset[1];
+    }
+    return A;
+}
+
+vector<vector<double>> transpose(vector<vector<double>> A){
+    for (int i = 0; i < A.size(); i++) {
+        A[i][0] = -A[i][0];
+        A[i][1] = -A[i][1];
+    }
+    return A;
+}
+
 int main()
 {
     // Define the coordinates of triangle A and B in 2D vectors
     vector<vector<double> > A(3, vector<double>(2));
-    // Robot A
+    // Define Robot A relative to origin
     A = {
-        { 0, -1 }, { 0, 1 }, { 1, 0 },
+        { 0, 1 }, { 0, -1 }, { -1, 0 },
     };
+    // shift the robot to other location in the world coordinate
+    // the robot can be at anywhere
+    vector<double> offset{-3,3};
+    A = translate(A, offset);
+
     vector<vector<double> > B(3, vector<double>(2));
-    // Obstacle B
+    // Define Obstacle B in the world coordinate, 
+    // which we need to identify the configuration space
     B = {
         { 0, 0 }, { 1, 1 }, { 1, -1 },
     };
+
+    // Reflect/Transpose the robot about its origin
+    auto A_transposed = transpose(A);
     
     // Translating Robot toward the obstacle
-    A=shift_space(B,A);
+    auto A_shifted=shift_space(B,A_transposed);
     
     // Compute the Minkowski Sum of triangle A and B
     vector<vector<double> > C;
-    C = minkowski_sum(A, B);
+    C = minkowski_sum(A_shifted, B);
 
     // Print the resulting vector
     print2DVector(C);
